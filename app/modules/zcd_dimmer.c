@@ -5,6 +5,8 @@
 #include "module.h"
 #include "c_types.h"
 #include "c_string.h"
+#include "gpio.h"
+#include "hw_timer.h"
 
 #define PULLUP PLATFORM_GPIO_PULLUP
 #define FLOAT PLATFORM_GPIO_FLOAT
@@ -16,14 +18,18 @@
 
 unsigned int zcd_dimmer_p;
 
+static const os_param_t TIMER_OWNER = 0x6770677f;
+
+static void ICACHE_RAM_ATTR zcd_timer(os_param_t p) 
+{
+    platform_gpio_write(zcd_dimmer_p, HIGH);
+}
 
 static uint32_t  ICACHE_RAM_ATTR zcd_interrupt(uint32_t ret_gpio_status) 
 {
     platform_gpio_write(zcd_dimmer_p, LOW);
 
-    os_delay_us(750);
-
-    platform_gpio_write(zcd_dimmer_p, HIGH);
+    platform_hw_timer_arm_us(TIMER_OWNER, 750);
 
     return ret_gpio_status;
 }
@@ -43,6 +49,13 @@ static int zcd_dimmer_start( lua_State* L )
 
     platform_gpio_register_intr_hook(zcd_pin, zcd_interrupt);
     platform_gpio_intr_init(zcd_pin, 5);
+
+    if (!platform_hw_timer_init(TIMER_OWNER, FRC1_SOURCE, FALSE)) {
+      // Failed to init the timer
+      luaL_error(L, "Unable to initialize timer");
+    }
+
+    platform_hw_timer_set_func(TIMER_OWNER, zcd_timer, 0);
 
     return 1;
 }

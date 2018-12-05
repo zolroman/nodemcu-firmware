@@ -7,8 +7,8 @@
 // this out and enabling the explicitly size, e.g. FLASH_4M.  Valid sizes are
 // FLASH_512K, FLASH_1M, FLASH_2M, FLASH_4M, FLASH_8M, FLASH_16M.
 
-#define FLASH_AUTOSIZE
-//#define FLASH_4M
+//#define FLASH_AUTOSIZE
+#define FLASH_4M
 
 
 // The firmware now selects a baudrate of 115,200 by default, but the driver
@@ -35,7 +35,7 @@
 // no performance loss.  However, you can define LUA_DWORD_ALIGNED_TVALUES and
 // this will force 16 byte TValues on FP builds.
 
-//#define LUA_NUMBER_INTEGRAL
+#define LUA_NUMBER_INTEGRAL
 //#define LUA_DWORD_ALIGNED_TVALUES
 
 
