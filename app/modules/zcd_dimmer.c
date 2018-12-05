@@ -14,27 +14,44 @@
 #define HIGH PLATFORM_GPIO_HIGH
 #define LOW PLATFORM_GPIO_LOW
 
+unsigned int zcd_dimmer_p;
+
+
+static uint32_t  ICACHE_RAM_ATTR zcd_interrupt(uint32_t ret_gpio_status) 
+{
+    platform_gpio_write(zcd_dimmer_p, LOW);
+
+    os_delay_us(750);
+
+    platform_gpio_write(zcd_dimmer_p, HIGH);
+
+    return ret_gpio_status;
+}
+
 static int zcd_dimmer_start( lua_State* L )
 {
-    unsigned zcd_pin;
-    unsigned control_pin;
+    unsigned int zcd_pin;
+    unsigned int control_pin;
     
     zcd_pin = (unsigned) luaL_checkinteger( L, 1 );
     control_pin = (unsigned) luaL_checkinteger( L, 2 );
     
-    platform_gpio_mode(zcd_pin, INTERRUPT);
-    platform_gpio_mode(control_pin, OUTPUT);
+    zcd_dimmer_p = control_pin;
 
+    platform_gpio_mode(zcd_pin, INTERRUPT, PLATFORM_GPIO_FLOAT);
+    platform_gpio_mode(control_pin, OUTPUT, PLATFORM_GPIO_FLOAT);
 
     platform_gpio_register_intr_hook(zcd_pin, zcd_interrupt);
-    platform_gpio_intr_init
+    platform_gpio_intr_init(zcd_pin, 5);
 
     return 1;
 }
 
 
-static uint32_t  ICACHE_RAM_ATTR zcd_interrupt(uint32_t ret_gpio_status) 
+const LUA_REG_TYPE zcd_dimmer_map[] =
 {
-    
-    return ret_gpio_status;
-}
+  { LSTRKEY( "start" ), LFUNCVAL( zcd_dimmer_start ) },
+  { LNILKEY, LNILVAL } // This map must always end like this
+};
+
+NODEMCU_MODULE(ZCD_DIMMER, "zcd_dimmer", zcd_dimmer_map, NULL);
